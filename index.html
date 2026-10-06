@@ -217,7 +217,10 @@ td .sub{display:block;font-size:12px;color:var(--muted)}
 @media (max-width:700px){#dripTiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 tr.spark td{padding:0 10px 12px}
 .sparkbox{width:100%}
-.sparkbox svg{display:block;width:100%;height:auto}
+.sparkbox svg{display:block;width:100%;height:auto;overflow:visible}
+.sparkbox text{fill:var(--muted);font-family:var(--font);font-size:8.5px}
+.sparkbox .t-ink{fill:var(--ink-2)}
+.sparkbox .cap{font-size:9.5px;fill:var(--ink-2)}
 .zoom{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;font-size:13px;color:var(--ink-2)}
 .zoom input[type=range]{flex:1 1 160px;min-width:140px;accent-color:var(--s3)}
 .zoom label{white-space:nowrap}
@@ -757,7 +760,7 @@ const DRIP_SNAPSHOT_CSV = ",Ширина рядов,,5,,5,,5,,5,,5,,5,,5,,5,,5,,
 const DEFAULT_DRIP_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRov86HK-IEztRwxZZBMgxJZWBqu1feJDBaipJ2fg2zxdptDqQEAiMVP20lRA6m-etLlJGogIcmFK70/pub?gid=1968849865&single=true&output=csv';
 const RATE_P = 160000, RATE_T = 400000, HDAY = 7, USD = 12500;
 const LS_KEY = 'chortok-dashboard-v2';
-const BUILD = "06.10.2026 · 27";
+const BUILD = "06.10.2026 · 31";
 const DEFAULT_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRov86HK-IEztRwxZZBMgxJZWBqu1feJDBaipJ2fg2zxdptDqQEAiMVP20lRA6m-etLlJGogIcmFK70/pub?gid=2006008190&single=true&output=csv';
 
 /* ============ формат ============ */
@@ -1268,7 +1271,7 @@ function decadeSpans(from, to){
     for (let i=0;i<bounds.length;i++){
       const a = y + '-' + String(mo).padStart(2,'0') + '-' + String(bounds[i][0]).padStart(2,'0');
       const b = y + '-' + String(mo).padStart(2,'0') + '-' + String(bounds[i][1]).padStart(2,'0');
-      if (b >= from && a <= to){ out.push({start:a, end:b, name:ddmm(a) + '–' + ddmm(b)}); }
+      if (b >= from && a <= to){ out.push({start:a, end:b, name:ddmm(a) + '–' + ddmm(b), tick:ddmm(a)}); }
     }
     if (y + '-' + String(mo).padStart(2,'0') >= to.slice(0,7)){ break; }
     mo += 1; if (mo > 12){ mo = 1; y += 1; }
@@ -1718,10 +1721,19 @@ function drawIrr(){
   if (tpath !== ''){ el('path',{d:tpath, fill:'none', stroke:'var(--s2)','stroke-width':1.5, 'stroke-linejoin':'round'},svg); }
   svg.querySelectorAll('rect[fill="transparent"]').forEach(n => svg.appendChild(n));
 }
+/* До какой даты данные реально есть: в книге план заведён на сезон вперёд,
+   и декады за будущие даты давали бы «0% потребности» на пустом месте. */
+function factHorizon(){
+  const h = dataBounds().max;
+  if (h > D.meta.to){ return D.meta.to; }
+  if (h < D.meta.from){ return D.meta.from; }
+  return h;
+}
 function decades(){
-  return decadeSpans(D.meta.from, D.meta.to).map(e => {
+  const end = factHorizon();
+  return decadeSpans(D.meta.from, end).map(e => {
     const from = e.start > D.meta.from ? e.start : D.meta.from;
-    const to = e.end < D.meta.to ? e.end : D.meta.to;
+    const to = e.end < end ? e.end : end;
     const days = dayList(from, to);
     const rows = IRRD.filter(r => r.date >= from && r.date <= to);
     const ha = rows.reduce((a,r)=>a+r.ha_f,0);
@@ -1789,7 +1801,7 @@ function drawCov(){
     if (rn > 0){ el('rect',{x:cx+1, y:y(sup+rn), width:bw, height:y(sup+rn+0.0001) < y(sup) ? y(sup)-y(sup+rn) : 0, fill:'var(--s1-soft)', rx:2},svg); }
     const label = txt(svg, cx, Math.min(y(r.need), y(sup+rn))-8, pct(r.cov), 't-strong', 'middle');
     label.setAttribute('style', 'fill:' + (r.cov < 0.9 ? 'var(--bad-ink)' : 'var(--ink)'));
-    txt(svg, cx, Hh-m.b+16, r.e.name, 't-ink', 'middle');
+    txt(svg, cx, Hh-m.b+16, r.e.tick, 't-ink', 'middle');
     const hit = el('rect',{x:m.l+band*i, y:m.t-20, width:band, height:ih+20, fill:'transparent'},svg);
     bindTip(hit, () => {
       const rows = [
@@ -2075,7 +2087,7 @@ function drawOpSpark(host, o){
     ]]);
   });
   const lab = useVol ? 'объём за день, ' + (o.unit === '' ? 'ед.' : o.unit) : 'людей в день (объём не ведётся)';
-  txt(svg, m.l, 12, lab + ' · всего ' + n0(pts.reduce((a,p)=>a+valOf(p),0)) + ' за ' + days_(pts.length), 't-ink', 'start');
+  txt(svg, m.l, 12, lab + ' · всего ' + n0(pts.reduce((a,p)=>a+valOf(p),0)) + ' за ' + days_(pts.length), 'cap', 'start');
   svg.querySelectorAll('rect[fill="transparent"]').forEach(n => svg.appendChild(n));
 }
 function renderWorks(){
@@ -2373,7 +2385,7 @@ function renderFindings(){
     const first = res[0];
     const wet = D.irr.filter(r => r.ha_f > 0);
     const lastWetDay = wet.length > 0 ? wet[wet.length-1].date : null;
-    const idle = lastWetDay === null ? 0 : dayList(lastWetDay, D.meta.to).length - 1;
+    const idle = lastWetDay === null ? 0 : dayList(lastWetDay, factHorizon()).length - 1;
     const expl = [];
     if (last.e.rain >= 5){ expl.push('за декаду выпало ' + n1(last.e.rain) + ' мм осадков (' + pct(last.rainSup/last.need) + ' потребности)'); }
     if (last.e.stopDays > 0){ expl.push(days_(last.e.stopDays) + ' работ отменено по погоде' + (last.e.stopReason === '' ? '' : ' («' + last.e.stopReason + '»)')); }
@@ -2481,9 +2493,8 @@ function setData(rows, name, info, remember){
   if (USER_RANGE !== null && USER_RANGE.from >= min && USER_RANGE.to <= max && USER_RANGE.from <= USER_RANGE.to){
     setDateField('dFrom', USER_RANGE.from); setDateField('dTo', USER_RANGE.to);
   } else {
-    const lastFact = lastFactDate();
     setDateField('dFrom', min);
-    setDateField('dTo', (lastFact === null || lastFact < min) ? max : lastFact);
+    setDateField('dTo', max);
   }
   if (remember === true){ store({rows:null}); }
   recompute();
@@ -2509,6 +2520,9 @@ function dataBounds(){
     if (f < min){ min = f; }
     if (t > max){ max = t; }
   }
+  /* дальше последнего факта в книге только план — аналитика туда не идёт */
+  const lf = lastFactDate();
+  if (lf !== null && lf >= min && lf < max){ max = lf; }
   return {min:min, max:max};
 }
 function recompute(){
@@ -3111,6 +3125,21 @@ function isoColumn(values, lo, hi, hint){
     return x.dm === null ? x.md : x.dm;
   });
 }
+/* Последняя дата, по которую в листе действительно есть данные: строки с нулями
+   в конце книги (заготовки на будущее) не должны расширять период отчёта. */
+function lastDataDate(rows, fallback){
+  let d = null;
+  rows.forEach(r => {
+    let sum = 0;
+    Object.keys(r).forEach(k => {
+      const v = r[k];
+      if (typeof v === 'number' && isFinite(v)){ sum += Math.abs(v); }
+    });
+    if (sum > 0 && (d === null || r.date > d)){ d = r.date; }
+  });
+  if (d === null){ return fallback; }
+  return d;
+}
 function colIdx(header, needle){
   const k = needle.toLowerCase();
   for (let i=0;i<header.length;i++){
@@ -3424,7 +3453,7 @@ const YKS = (function(){
       const main = await gsRows(ID,'Итоговая');
       S.rows = parseMain(main);
       const ds = S.rows.map(r => r.date).sort();
-      S.min = ds[0]; S.max = ds[ds.length-1];
+      S.min = ds[0]; S.max = lastDataDate(S.rows, ds[ds.length-1]);
       try { S.stops = parseStops(await gsRows(ID,'Простои'), S.min, S.max); } catch (e){ S.stops = []; }
       try { S.acts = parseActs(await gsRows(ID,'Приемка яблок'), S.min, S.max); } catch (e){ S.acts = []; }
       if (S.from === null){ S.from = S.min; S.to = S.max; }
@@ -3436,7 +3465,7 @@ const YKS = (function(){
       if (SNAP_YKS_MAIN !== ''){
         S.rows = parseMain(parseTable(SNAP_YKS_MAIN));
         const ds2 = S.rows.map(r => r.date).sort();
-        S.min = ds2[0]; S.max = ds2[ds2.length-1];
+        S.min = ds2[0]; S.max = lastDataDate(S.rows, ds2[ds2.length-1]);
         if (S.from === null){ S.from = S.min; S.to = S.max; }
         setDateField('yksFrom', S.from);
         setDateField('yksTo', S.to);
@@ -3767,7 +3796,7 @@ const PEC = (function(){
       const parsed = parseMain(await gsRows(ID,'Итоговая'));
       S.rows = parsed.rows; S.units = parsed.units; S.mats = parsed.mats;
       const ds = S.rows.map(r => r.date).sort();
-      S.min = ds[0]; S.max = ds[ds.length-1];
+      S.min = ds[0]; S.max = lastDataDate(S.rows, ds[ds.length-1]);
       const hintDays = {};
       S.rows.forEach(r => { if (r.stopTotal > 0){ hintDays[r.date] = true; } });
       try { S.stops = parseStops(await gsRows(ID,'Простои'), S.min, S.max, hintDays); } catch (e){ S.stops = []; }
@@ -3781,7 +3810,7 @@ const PEC = (function(){
         const snap = parseMain(parseTable(SNAP_PEC_MAIN));
         S.rows = snap.rows; S.units = snap.units; S.mats = snap.mats;
         const ds2 = S.rows.map(r => r.date).sort();
-        S.min = ds2[0]; S.max = ds2[ds2.length-1];
+        S.min = ds2[0]; S.max = lastDataDate(S.rows, ds2[ds2.length-1]);
         if (S.from === null){ S.from = S.min; S.to = S.max; }
         setDateField('pecFrom', S.from);
         setDateField('pecTo', S.to);
