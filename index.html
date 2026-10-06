@@ -85,6 +85,13 @@ section.block{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;margin-b
 .btn[disabled]{opacity:.55;cursor:default}
 .dates{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
 .field{display:grid;gap:4px}
+.datebox{position:relative;display:inline-block}
+.datebox input[type=text]{padding-right:30px}
+.datebox .calbtn{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+  border:0;background:transparent;color:var(--muted);cursor:pointer;padding:0;border-radius:6px;line-height:0}
+.datebox .calbtn:hover{color:var(--ink);background:var(--surface-2)}
+.datebox .calbtn svg{width:16px;height:16px;display:block}
+.datebox input[type=date]{position:absolute;right:6px;bottom:0;width:1px;height:1px;opacity:0;border:0;padding:0;pointer-events:none}
 .field label{font-size:12.5px;color:var(--ink-2)}
 .field .hint{font-size:12px;color:var(--muted)}
 /* в сетке параметров поля выравниваются построчно: подпись — поле ввода — пояснение */
@@ -197,7 +204,10 @@ td .sub{display:block;font-size:12px;color:var(--muted)}
 .preset-row{display:flex;gap:6px;flex-wrap:wrap}
 .presets button{font:inherit;font-size:13px;padding:5px 11px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);cursor:pointer}
 .presets button:hover{color:var(--ink)}
-.projtabs{position:sticky;top:0;z-index:60;display:flex;gap:8px;flex-wrap:wrap;background:var(--plane);padding:12px 0 10px;border-bottom:1px solid var(--border);margin:0 0 16px}
+.projtabs{position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--plane);padding:12px 0 10px;border-bottom:1px solid var(--border);margin:0 0 16px}
+.projtabs .logo{height:40px;width:auto;margin-right:14px;flex:0 0 auto}
+@media (prefers-color-scheme: dark){.projtabs .logo{filter:brightness(0) invert(1)}}
+@media (max-width:520px){.projtabs .logo{height:28px;margin-right:8px}}
 .projtabs .prj{font:inherit;font-size:14px;font-weight:600;padding:9px 16px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);cursor:pointer}
 .projtabs .prj:hover{color:var(--ink)}
 .projtabs .prj.on{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -264,6 +274,7 @@ pre.code{margin:0;background:var(--surface-2);border:1px solid var(--border);bor
 
 <div class="wrap">
   <div class="projtabs" role="tablist" aria-label="Проекты">
+    <img class="logo" src="data:image/png;base64,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" alt="NamAgroTech" width="134" height="48">
     <button type="button" class="prj on" data-prj="chortok" aria-pressed="true">Сад Чорток</button>
     <button type="button" class="prj" data-prj="yks" aria-pressed="false">Линия ЯКС</button>
     <button type="button" class="prj" data-prj="pectin" aria-pressed="false">Линия пектина</button>
@@ -278,8 +289,8 @@ pre.code{margin:0;background:var(--surface-2);border:1px solid var(--border);bor
   <div class="toolbar" id="toolbar">
     <div class="line">
       <div class="dates">
-        <div class="field"><label for="dFrom">С даты</label><input id="dFrom" type="text" inputmode="numeric" placeholder="дд.мм.гггг" size="10" autocomplete="off"></div>
-        <div class="field"><label for="dTo">По дату</label><input id="dTo" type="text" inputmode="numeric" placeholder="дд.мм.гггг" size="10" autocomplete="off"></div>
+        <div class="field"><label for="dFrom">С даты</label><span class="datebox"><input id="dFrom" type="text" inputmode="numeric" placeholder="дд.мм.гггг" size="10" autocomplete="off"><button type="button" class="calbtn" data-for="dFrom" title="Выбрать дату" aria-label="Выбрать дату"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></button></span></div>
+        <div class="field"><label for="dTo">По дату</label><span class="datebox"><input id="dTo" type="text" inputmode="numeric" placeholder="дд.мм.гггг" size="10" autocomplete="off"><button type="button" class="calbtn" data-for="dTo" title="Выбрать дату" aria-label="Выбрать дату"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></button></span></div>
         <button class="btn" type="button" id="btnAll">Весь период</button>
       </div>
       <button class="btn primary" type="button" id="btnRefresh" title="Перечитывает данные страницы">Обновить сейчас</button>
@@ -344,6 +355,13 @@ pre.code{margin:0;background:var(--surface-2);border:1px solid var(--border);bor
         <span><i class="line" style="background:var(--ink-2)"></i>План полива, га</span>
         <span><i style="background:var(--rain)"></i>Осадки, мм — полоса сверху</span>
         <span><i class="line" style="background:var(--s2)"></i>Tmax, °C — правая ось</span>
+      </div>
+      <div class="zoom">
+        <label for="irrZoomA">С <b id="irrZoomAv"></b></label>
+        <input type="range" id="irrZoomA" min="0" max="1" value="0" step="1">
+        <label for="irrZoomB">по <b id="irrZoomBv"></b></label>
+        <input type="range" id="irrZoomB" min="0" max="1" value="1" step="1">
+        <button class="btn" type="button" id="irrZoomAll">Весь период</button>
       </div>
       <div class="chart" id="chIrr"></div>
     </div>
@@ -545,8 +563,8 @@ pre.code{margin:0;background:var(--surface-2);border:1px solid var(--border);bor
     <div class="toolbar">
       <div class="line">
         <div class="dates">
-          <div class="field"><label for="yksFrom">С даты</label><input id="yksFrom" type="text" inputmode="numeric" placeholder="дд.мм.гггг" size="10" autocomplete="off"></div>
-          <div class="field"><label for="yksTo">По дату</label><input id="yksTo" type="text" inputmode="numeric" placeholder="дд.мм.гггг" size="10" autocomplete="off"></div>
+          <div class="field"><label for="yksFrom">С даты</label><span class="datebox"><input id="yksFrom" type="text" inputmode="numeric" placeholder="дд.мм.гггг" size="10" autocomplete="off"><button type="button" class="calbtn" data-for="yksFrom" title="Выбрать дату" aria-label="Выбрать дату"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></button></span></div>
+          <div class="field"><label for="yksTo">По дату</label><span class="datebox"><input id="yksTo" type="text" inputmode="numeric" placeholder="дд.мм.гггг" size="10" autocomplete="off"><button type="button" class="calbtn" data-for="yksTo" title="Выбрать дату" aria-label="Выбрать дату"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></button></span></div>
           <button class="btn" type="button" id="yksAll">Весь период</button>
         </div>
         <button class="btn primary" type="button" id="yksRefresh">Обновить сейчас</button>
@@ -642,8 +660,8 @@ pre.code{margin:0;background:var(--surface-2);border:1px solid var(--border);bor
     <div class="toolbar">
       <div class="line">
         <div class="dates">
-          <div class="field"><label for="pecFrom">С даты</label><input id="pecFrom" type="text" inputmode="numeric" placeholder="дд.мм.гггг" size="10" autocomplete="off"></div>
-          <div class="field"><label for="pecTo">По дату</label><input id="pecTo" type="text" inputmode="numeric" placeholder="дд.мм.гггг" size="10" autocomplete="off"></div>
+          <div class="field"><label for="pecFrom">С даты</label><span class="datebox"><input id="pecFrom" type="text" inputmode="numeric" placeholder="дд.мм.гггг" size="10" autocomplete="off"><button type="button" class="calbtn" data-for="pecFrom" title="Выбрать дату" aria-label="Выбрать дату"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></button></span></div>
+          <div class="field"><label for="pecTo">По дату</label><span class="datebox"><input id="pecTo" type="text" inputmode="numeric" placeholder="дд.мм.гггг" size="10" autocomplete="off"><button type="button" class="calbtn" data-for="pecTo" title="Выбрать дату" aria-label="Выбрать дату"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></button></span></div>
           <button class="btn" type="button" id="pecAll">Весь период</button>
         </div>
         <button class="btn primary" type="button" id="pecRefresh">Обновить сейчас</button>
@@ -739,7 +757,7 @@ const DRIP_SNAPSHOT_CSV = ",Ширина рядов,,5,,5,,5,,5,,5,,5,,5,,5,,5,,
 const DEFAULT_DRIP_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRov86HK-IEztRwxZZBMgxJZWBqu1feJDBaipJ2fg2zxdptDqQEAiMVP20lRA6m-etLlJGogIcmFK70/pub?gid=1968849865&single=true&output=csv';
 const RATE_P = 160000, RATE_T = 400000, HDAY = 7, USD = 12500;
 const LS_KEY = 'chortok-dashboard-v2';
-const BUILD = "06.10.2026 · 22";
+const BUILD = "06.10.2026 · 27";
 const DEFAULT_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRov86HK-IEztRwxZZBMgxJZWBqu1feJDBaipJ2fg2zxdptDqQEAiMVP20lRA6m-etLlJGogIcmFK70/pub?gid=2006008190&single=true&output=csv';
 
 /* ============ формат ============ */
@@ -1504,9 +1522,6 @@ function renderIrrTiles(){
   const wetDec = res.filter(r => r.e.haDay > 0);
   const lastWetDec = wetDec.length > 0 ? wetDec[wetDec.length-1] : null;
   const last = res.length > 0 ? res[res.length-1] : null;
-  const wet = D.irr.filter(r => r.ha_f > 0);
-  const lastWet = wet.length > 0 ? wet[wet.length-1].date : null;
-  const idleDays = lastWet === null ? 0 : dayList(lastWet, D.meta.to).length - 1;
   const stopDays = D.irr.filter(r => r.cancelled === true).length;
   const rainMm = wxRange(D.meta.from, D.meta.to);
   box.append(
@@ -1530,8 +1545,6 @@ function renderIrrTiles(){
       lastWetDec === null ? 'тракторного полива в периоде нет'
         : 'по декаде ' + lastWetDec.e.name + ' · зона ' + n0(lastWetDec.e.trArea) + ' га · допустимо ' +
           (lastWetDec.maxInt === null ? 'дожди закрывают' : n1(lastWetDec.maxInt) + ' дн.')),
-    tile('Последний полив трактором', lastWet === null ? '—' : ddmm(lastWet), '',
-      idleDays > 2 ? 'с тех пор ' + days_(idleDays) + ' без тракторного полива — дожди и капля' : 'полив идёт'),
     tile('Осадки за период', rainMm === null ? '—' : n1(rainMm.rain), 'мм',
       (rainMm === null ? '' : rainMm.rainDays + ' дн. с дождём') + (stopDays > 0 ? ' · ' + days_(stopDays) + ' работ отменено по погоде' : '')),
     tile('Подано воды тракторами', n0(TR.tractors*val('tTrips')*val('tTank')/1000), 'м³',
@@ -1559,21 +1572,15 @@ function renderFill(){
     if (n2 <= 3){ return '<span class="chip warn"><i></i>отстаёт на ' + days_(n2) + '</span>'; }
     return '<span class="chip crit"><i></i>отстаёт на ' + days_(n2) + '</span>';
   };
-  const done = ALL.filter(r => r.st === 'Выполнено').map(r => r.date).sort();
-  const lastDone = done.length > 0 ? done[done.length-1] : null;
   const filled = ALL.filter(r => r.st === 'Выполнено' || r.st === 'Отменено').map(r => r.date).sort();
   const lastFilled = filled.length > 0 ? filled[filled.length-1] : null;
-  const cancelled = ALL.filter(r => r.st === 'Отменено' && r.date > (lastDone === null ? '' : lastDone));
-  const cancelDays = Object.keys(Object.fromEntries(cancelled.map(r => [r.date, 1]))).length;
   const dripLast = (DRIP === null || DRIP.days.length === 0) ? null
     : DRIP.days.filter(x => x.minutes > 0 || x.tons > 0).map(x => x.date).sort().slice(-1)[0];
   const parts = [
     '<span class="fillk">Заполненность данных</span>',
-    '<span>План-факт: <b>' + (lastFilled === null ? '—' : ddmm(lastFilled)) + '</b> ' + badge(lag(lastFilled)) +
-      (cancelDays > 0 ? ' <span style="color:var(--muted)">факт по ' + (lastDone === null ? '—' : ddmm(lastDone)) + ', дальше ' + days_(cancelDays) + ' отменено по погоде</span>' : '') + '</span>',
+    '<span>План-факт: <b>' + (lastFilled === null ? '—' : ddmm(lastFilled)) + '</b> ' + badge(lag(lastFilled)) + '</span>',
     '<span>Капельный полив: <b>' + (dripLast === undefined || dripLast === null ? '—' : ddmm(dripLast)) + '</b> ' + badge(lag(dripLast === undefined ? null : dripLast)) + '</span>',
-    '<span>Погода: <b>' + (WX_TO === null ? '—' : ddmm(WX_TO)) + '</b> ' + badge(lag(WX_TO)) + '</span>',
-    '<span>Источник: <b>' + SRC.name + '</b> · ' + SRC.info + '</span>'
+    '<span>Погода: <b>' + (WX_TO === null ? '—' : ddmm(WX_TO)) + '</b> ' + badge(lag(WX_TO)) + '</span>'
   ];
   host.innerHTML = parts.join('');
 }
@@ -1603,6 +1610,20 @@ function renderWx(){
     'Состояние: ' + WX_SRC + '. Кнопка «Обновить сейчас» перезапрашивает и погоду тоже — на claude.ai внешние запросы запрещены, там остаётся снимок из файла. ' +
     'ET₀ в расчёт берётся по этим данным — поля слева позволяют подставить показания своей метеостанции.';
 }
+let IRR_ZOOM = {a:null, b:null};
+function irrZoomDays(all){
+  const A = document.getElementById('irrZoomA'), B = document.getElementById('irrZoomB');
+  if (A === null || B === null || all.length === 0){ return all; }
+  const last = all.length - 1;
+  A.max = String(last); B.max = String(last);
+  if (IRR_ZOOM.a === null || IRR_ZOOM.a > last){ IRR_ZOOM.a = 0; }
+  if (IRR_ZOOM.b === null || IRR_ZOOM.b > last){ IRR_ZOOM.b = last; }
+  if (IRR_ZOOM.a > IRR_ZOOM.b){ const t = IRR_ZOOM.a; IRR_ZOOM.a = IRR_ZOOM.b; IRR_ZOOM.b = t; }
+  A.value = String(IRR_ZOOM.a); B.value = String(IRR_ZOOM.b);
+  document.getElementById('irrZoomAv').textContent = ddmm(all[IRR_ZOOM.a]);
+  document.getElementById('irrZoomBv').textContent = ddmm(all[IRR_ZOOM.b]);
+  return all.slice(IRR_ZOOM.a, IRR_ZOOM.b + 1);
+}
 function drawIrr(){
   const host = document.getElementById('chIrr'); host.replaceChildren();
   const noteEl = document.getElementById('irrChartNote');
@@ -1612,7 +1633,7 @@ function drawIrr(){
       ? 'с ' + ddmm(only[0].date) + ' весь факт полива записан на блок 100 га'
       : 'столбец — факт полива за день';
   }
-  const days = dayList(D.meta.from, D.meta.to);
+  const days = irrZoomDays(dayList(D.meta.from, D.meta.to));
   const byDate = Object.fromEntries(D.irr.map(r => [r.date, r]));
   const W = Math.max(320, host.clientWidth), Hh = 300, m = {l:52, r:54, t:58, b:34};
   const svg = el('svg',{viewBox:'0 0 '+W+' '+Hh, role:'img', 'aria-label':'Полив, температура и осадки по дням'}, host);
@@ -2460,10 +2481,26 @@ function setData(rows, name, info, remember){
   if (USER_RANGE !== null && USER_RANGE.from >= min && USER_RANGE.to <= max && USER_RANGE.from <= USER_RANGE.to){
     setDateField('dFrom', USER_RANGE.from); setDateField('dTo', USER_RANGE.to);
   } else {
-    setDateField('dFrom', min); setDateField('dTo', max);
+    const lastFact = lastFactDate();
+    setDateField('dFrom', min);
+    setDateField('dTo', (lastFact === null || lastFact < min) ? max : lastFact);
   }
   if (remember === true){ store({rows:null}); }
   recompute();
+}
+/* последняя дата, по которую есть факт: план в книге заводится на сезон вперёд,
+   и период по умолчанию не должен тянуться до будущих плановых дат */
+function lastFactDate(){
+  let d = null;
+  ALL.forEach(r => { if (r.st === 'Выполнено' && (d === null || r.date > d)){ d = r.date; } });
+  if (DRIP !== null){
+    DRIP.days.forEach(x => {
+      if (x.minutes > 0 || x.tons > 0){
+        if (d === null || x.date > d){ d = x.date; }
+      }
+    });
+  }
+  return d;
 }
 function dataBounds(){
   let min = ALL[0].date, max = ALL[ALL.length-1].date;
@@ -2779,6 +2816,9 @@ document.getElementById('btnRefresh').addEventListener('click', () => {
 document.getElementById('dripZoomA').addEventListener('input', e => { DRIP_ZOOM.a = parseInt(e.target.value, 10); renderDrip(); });
 document.getElementById('dripZoomB').addEventListener('input', e => { DRIP_ZOOM.b = parseInt(e.target.value, 10); renderDrip(); });
 document.getElementById('dripZoomAll').addEventListener('click', () => { DRIP_ZOOM = {a:null, b:null}; renderDrip(); });
+document.getElementById('irrZoomA').addEventListener('input', e => { IRR_ZOOM.a = parseInt(e.target.value, 10); drawIrr(); });
+document.getElementById('irrZoomB').addEventListener('input', e => { IRR_ZOOM.b = parseInt(e.target.value, 10); drawIrr(); });
+document.getElementById('irrZoomAll').addEventListener('click', () => { IRR_ZOOM = {a:null, b:null}; drawIrr(); });
 document.getElementById('btnFetchDrip').addEventListener('click', () => {
   const u = document.getElementById('dripUrl').value.trim();
   if (u === ''){ msg('Вставьте ссылку на лист «Капельный полив».', 'err'); return; }
@@ -4002,6 +4042,32 @@ const PEC = (function(){
     new ResizeObserver(schedule).observe(document.body);
   }
 })();
+
+/* Календарь к полю даты: поле остаётся текстовым в формате ДД.ММ.ГГГГ,
+   а кнопка открывает системный выбор даты через скрытый input[type=date]. */
+function attachDatePicker(btn){
+  const id = btn.getAttribute('data-for');
+  const inp = document.getElementById(id);
+  if (inp === null){ return; }
+  const pick = document.createElement('input');
+  pick.type = 'date';
+  btn.parentNode.appendChild(pick);
+  btn.addEventListener('click', () => {
+    const iso = isoDate(inp.value.trim());
+    if (iso !== null){ pick.value = iso; }
+    if (pick.showPicker !== undefined){
+      try { pick.showPicker(); } catch (e){ pick.focus(); }
+    } else {
+      pick.focus();
+    }
+  });
+  pick.addEventListener('change', () => {
+    if (pick.value === ''){ return; }
+    inp.value = ddmm(pick.value);
+    inp.dispatchEvent(new Event('change'));
+  });
+}
+document.querySelectorAll('.calbtn').forEach(attachDatePicker);
 
 /* стартовая вкладка — последняя открытая */
 (function(){
