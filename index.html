@@ -760,7 +760,7 @@ const DRIP_SNAPSHOT_CSV = ",Ширина рядов,,5,,5,,5,,5,,5,,5,,5,,5,,5,,
 const DEFAULT_DRIP_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRov86HK-IEztRwxZZBMgxJZWBqu1feJDBaipJ2fg2zxdptDqQEAiMVP20lRA6m-etLlJGogIcmFK70/pub?gid=1968849865&single=true&output=csv';
 const RATE_P = 160000, RATE_T = 400000, HDAY = 7, USD = 12500;
 const LS_KEY = 'chortok-dashboard-v2';
-const BUILD = "06.10.2026 · 31";
+const BUILD = "06.10.2026 · 33";
 const DEFAULT_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRov86HK-IEztRwxZZBMgxJZWBqu1feJDBaipJ2fg2zxdptDqQEAiMVP20lRA6m-etLlJGogIcmFK70/pub?gid=2006008190&single=true&output=csv';
 
 /* ============ формат ============ */
@@ -2382,28 +2382,26 @@ function renderFindings(){
            ' га капля даёт ' + pct(dc.cover) + ', поэтому по саду в целом выходит ' + pct(all) + '.';
        })(), go:'#irrigation'});
   if (res.length >= 2){
-    const first = res[0];
-    const wet = D.irr.filter(r => r.ha_f > 0);
-    const lastWetDay = wet.length > 0 ? wet[wet.length-1].date : null;
-    const idle = lastWetDay === null ? 0 : dayList(lastWetDay, factHorizon()).length - 1;
     const expl = [];
     if (last.e.rain >= 5){ expl.push('за декаду выпало ' + n1(last.e.rain) + ' мм осадков (' + pct(last.rainSup/last.need) + ' потребности)'); }
     if (last.e.stopDays > 0){ expl.push(days_(last.e.stopDays) + ' работ отменено по погоде' + (last.e.stopReason === '' ? '' : ' («' + last.e.stopReason + '»)')); }
     if (DRIP !== null && dripAreaAt(D.meta.to) > 0){
       expl.push('капля закрыла ' + n1(dripAreaAt(D.meta.to)) + ' га, в зоне трактора осталось ' + n1(Math.max(0, area - dripAreaAt(D.meta.to))) + ' га');
     }
-    if (idle >= 3 && lastWetDay !== null){
-      /* полива нет уже несколько дней — это состояние, а не «снижение темпа» */
-      items.push({cls: last.cov < 0.9 ? 'ser' : 'info', tag:'Тракторный полив',
-        h:'Тракторного полива нет с ' + ddmm(lastWetDay) + ' — уже ' + days_(idle),
-        p:'Последний выезд ' + ddmm(lastWetDay) + ' (' + n1(wet[wet.length-1].ha_f) + ' га). В декаде ' + last.e.name +
-          ' саженец получает ' + pct(last.cov) + ' потребности — ' + (last.rainSup > 0 ? 'почти всё это дождь' : 'воды не поступает') + '. ' +
+    /* главное в ручном поливе — закрыта ли потребность саженца, чем бы она ни закрывалась */
+    const rainShareLast = last.need > 0 ? last.rainSup/last.need : 0;
+    if (last.cov >= 0.95){
+      items.push({cls:'info', tag:'Влага в зоне трактора',
+        h:'Потребность закрыта: в декаде ' + last.e.name + ' саженец получает ' + pct(last.cov) + ' нормы',
+        p:(rainShareLast >= 0.5
+            ? 'Воду дал дождь: ' + pct(rainShareLast) + ' потребности против ' + pct(last.covTr) + ' от трактора. '
+            : 'Трактор даёт ' + pct(last.covTr) + ' потребности, дождь добавляет ' + pct(rainShareLast) + '. ') +
           (expl.length > 0 ? 'Что говорят данные: ' + expl.join('; ') + '.' : ''), go:'#irrigation'});
-    } else if (last.e.haDay < first.e.haDay*0.85){
-      items.push({cls: last.cov < 0.9 ? 'ser' : 'info', tag:'Темп полива',
-        h:'Тракторный полив снизился: с ' + n1(first.e.haDay) + ' до ' + n1(last.e.haDay) + ' га в день',
-        p:'В декаде ' + last.e.name + ' трактор даёт ' + pct(last.covTr) + ' потребности, вместе с дождём — ' + pct(last.cov) + '. ' +
-          (expl.length > 0 ? 'Причины по данным: ' + expl.join('; ') + '.' : 'Причина в данных не указана.'), go:'#irrigation'});
+    } else {
+      items.push({cls: last.cov < 0.8 ? 'ser' : 'warn', tag:'Влага в зоне трактора',
+        h:'Саженец недополучает воду: в декаде ' + last.e.name + ' только ' + pct(last.cov) + ' нормы',
+        p:'Трактор даёт ' + pct(last.covTr) + ' потребности, дождь добавляет ' + pct(rainShareLast) + '. ' +
+          (expl.length > 0 ? 'Что говорят данные: ' + expl.join('; ') + '.' : ''), go:'#irrigation'});
     }
   }
   const dst = dripStats(D.meta.from, D.meta.to);
@@ -2503,7 +2501,8 @@ function setData(rows, name, info, remember){
    и период по умолчанию не должен тянуться до будущих плановых дат */
 function lastFactDate(){
   let d = null;
-  ALL.forEach(r => { if (r.st === 'Выполнено' && (d === null || r.date > d)){ d = r.date; } });
+  /* отчётные дни — и выполненные, и отменённые: отмена по погоде такой же факт дня, как выезд */
+  ALL.forEach(r => { if ((r.st === 'Выполнено' || r.st === 'Отменено') && (d === null || r.date > d)){ d = r.date; } });
   if (DRIP !== null){
     DRIP.days.forEach(x => {
       if (x.minutes > 0 || x.tons > 0){
