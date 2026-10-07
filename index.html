@@ -172,7 +172,7 @@ table.narrow td .sub{font-size:11.5px}
 th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums;vertical-align:top}
 th{font-size:10.5px;font-weight:600;color:var(--muted);background:var(--surface);position:sticky;top:0;text-transform:uppercase;letter-spacing:.06em}
 th:first-child,td:first-child{text-align:left}
-td.l{text-align:left}
+td.l,th.l{text-align:left}
 tr.grp td{background:var(--surface-2);font-weight:600;color:var(--ink)}
 tr.sum td{font-weight:600}
 td .sub{display:block;font-size:12px;color:var(--muted)}
@@ -310,6 +310,7 @@ pre.code{margin:0;background:var(--surface-2);border:1px solid var(--border);bor
     <a href="#drip">Капельный полив</a>
     <a href="#works">Остальные работы</a>
     <a href="#quality">Качество учёта</a>
+    <a href="#method">Как считается</a>
   </nav>
 
   <div class="fill" id="fillPanel"></div>
@@ -498,6 +499,128 @@ pre.code{margin:0;background:var(--surface-2);border:1px solid var(--border);bor
     <div class="grid-2">
       <div class="panel"><h3 style="margin-bottom:10px">Что найдено в «План-Факт»</h3><ul class="plain" id="dqList"></ul></div>
       <div class="panel"><h3 style="margin-bottom:10px">Что запросить у хозяйства</h3><ul class="plain" id="askList"></ul></div>
+    </div>
+  </section>
+
+  <section class="block" id="method">
+    <div class="block-head">
+      <h2>Как считается: формулы и источники</h2>
+      <p>Каждое число на вкладке «Сад Чорток» получено из двух листов книги и суточных метеоданных. Ниже — все формулы, по которым можно пересчитать дашборд вручную. Параметры со звёздочкой меняются в блоке «Параметры расчёта» на вкладке «Ручной полив» — в скобках значение по умолчанию.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>1. Что читается из источников</h3><span class="note">строка берётся в расчёт, только если распознана дата</span></div>
+      <div class="tbl-wrap"><table class="narrow">
+        <thead><tr><th class="l">Источник</th><th class="l">Что берётся</th><th class="l">Правило отбора</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Лист «План-Факт»</td>
+            <td class="l">Дата план с, Направление, Участок/блок, Операция, Тип операции, Ед. изм., Норма чел/час на ед., План: объём, План чел/час, План /техника/ штук, Факт: объём, Факт чел/час, Факт /техника/ штук, Статус, Комментарий / причина</td>
+            <td class="l">направление «Фрукты» или пустое; строки без даты пропускаются; в суммы факта входят только строки со статусом «Выполнено»</td></tr>
+          <tr><td class="l">Лист «Капельный полив»</td>
+            <td class="l">Дата, Дождь, пары колонок по секторам: серая — план в минутах, белая — факт; из шапки берутся номер сектора, блок, культура и площадь, га (число в скобках в названии)</td>
+            <td class="l">читаются строки с датой; подача т/мин берётся из параметров над таблицей, при отсутствии — 0,27 т/мин</td></tr>
+          <tr><td class="l">open-meteo (ERA5 + прогноз)</td>
+            <td class="l">Tmax, Tmin, сумма осадков за сутки, ET₀ по FAO-56 (Харгривс) для точки 41,0597 / 71,8128</td>
+            <td class="l">обновляется кнопкой «Обновить сейчас»; при отсутствии сети берётся снимок, встроенный в файл</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>2. Деньги, люди и техника</h3><span class="note">ставки зашиты в дашборд</span></div>
+      <div class="tbl-wrap"><table class="narrow">
+        <thead><tr><th class="l">Показатель</th><th class="l">Формула</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Ставка человека</td><td class="l">160 000 сум за человеко-день</td></tr>
+          <tr><td class="l">Ставка трактора</td><td class="l">400 000 сум за трактор-день</td></tr>
+          <tr><td class="l">Рабочий день</td><td class="l">7 часов, поэтому чел-ч = чел-дни × 7, маш-ч = трактор-дни × 7</td></tr>
+          <tr><td class="l">Затраты факт</td><td class="l">Σ (Факт чел/час × 160 000 + Факт /техника/ штук × 400 000) по строкам «Выполнено»</td></tr>
+          <tr><td class="l">Затраты план</td><td class="l">Σ (План чел/час × 160 000 + План /техника/ штук × 400 000) по тем же строкам</td></tr>
+          <tr><td class="l">Пересчёт в доллары</td><td class="l">сумма ÷ 12 500 (курс из листа «Бюджет»)</td></tr>
+          <tr><td class="l">Выработка на человека</td><td class="l">Σ Факт: объём ÷ Σ Факт чел/час по дням, где заполнены и объём, и люди</td></tr>
+          <tr><td class="l">Норма по операции</td><td class="l">медиана значений колонки «Норма чел/час на ед.» за период</td></tr>
+          <tr><td class="l">Стоимость посадки саженца</td><td class="l">затраты факт всей группы «Посадка» ÷ посажено саженцев</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>3. Тракторный полив: что сделано по факту</h3><span class="note">строки «Полив», блоки 50 га и 100 га; блок 10 га считается отдельно</span></div>
+      <div class="tbl-wrap"><table class="narrow">
+        <thead><tr><th class="l">Показатель</th><th class="l">Формула</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Полито за период</td><td class="l">Σ Факт: объём по строкам «Полив» со статусом «Выполнено»</td></tr>
+          <tr><td class="l">Темп полива, га в день</td><td class="l">полито ÷ число дней с выполненным поливом</td></tr>
+          <tr><td class="l">Зона трактора на дату</td><td class="l">площадь под тракторным поливом* (150 га) − площадь секторов, уже подключённых к капле на эту дату</td></tr>
+          <tr><td class="l">Интервал обхода, дней</td><td class="l">зона трактора ÷ темп полива за декаду: столько проходит между двумя поливами одного саженца</td></tr>
+          <tr><td class="l">Подано воды тракторами, м³</td><td class="l">Σ трактор-дней × рейсов на трактор в день* (6) × объём бака* (2 800 л) ÷ 1 000</td></tr>
+          <tr><td class="l">На саженец за полив, л</td><td class="l">подано воды, л ÷ (полито, га × саженцев на 1 га* (865))</td></tr>
+          <tr><td class="l">Нужно рейсов в день</td><td class="l">саженцев на 1 га × норма воды на саженец* (24 л) × темп полива ÷ (тракторов в день × объём бака)</td></tr>
+          <tr><td class="l">Стоимость 1 га полива</td><td class="l">затраты факт по поливу ÷ полито, га</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>4. Потребность саженца и покрытие</h3><span class="note">расчёт по декадам: 1–10, 11–20, 21–конец месяца</span></div>
+      <div class="tbl-wrap"><table class="narrow">
+        <thead><tr><th class="l">Показатель</th><th class="l">Формула</th><th class="l">Единица</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Потребность</td><td class="l">ET₀ × Kc* (1,0) × площадь смачивания лунки* (0,5 м²)</td><td class="l">л/сут на саженец</td></tr>
+          <tr><td class="l">Дал трактор</td><td class="l">норма воды на саженец* (24 л) × КПД полива* (0,8) ÷ интервал обхода</td><td class="l">л/сут на саженец</td></tr>
+          <tr><td class="l">Дал дождь</td><td class="l">осадки за декаду ÷ число дней × площадь смачивания × 0,8, но не больше потребности (эффективные осадки по FAO)</td><td class="l">л/сут на саженец</td></tr>
+          <tr><td class="l">Покрытие</td><td class="l">(дал трактор + дал дождь) ÷ потребность</td><td class="l">%</td></tr>
+          <tr><td class="l">Допустимый интервал</td><td class="l">норма × КПД ÷ (потребность − дождь), не больше 60 дней; если дождь закрывает потребность — интервал не ограничен</td><td class="l">дней</td></tr>
+          <tr><td class="l">Нужно га в день</td><td class="l">зона трактора ÷ допустимый интервал</td><td class="l">га/день</td></tr>
+          <tr><td class="l">Покрытие за период</td><td class="l">Σ (подача за декаду × дней в декаде) ÷ Σ (потребность × дней в декаде)</td><td class="l">%</td></tr>
+          <tr><td class="l">По саду в целом</td><td class="l">(зона трактора × её покрытие + зона капли × её покрытие) ÷ общая площадь</td><td class="l">%</td></tr>
+        </tbody>
+      </table></div>
+      <p class="callout" style="margin-top:12px">ET₀ по умолчанию берётся из метеоданных за декаду; значение можно заменить вручную в блоке «ET₀ по декадам» — пересчёт идёт сразу. Если суточных данных за декаду нет, подставляется справочное значение для Намангана: 6,7 / 6,4 / 5,6 мм в августе, 5,0 / 4,2 / 3,6 в сентябре, 3,0 в октябре.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>5. Капельный полив</h3><span class="note">план и факт в листе — в минутах запуска</span></div>
+      <div class="tbl-wrap"><table class="narrow">
+        <thead><tr><th class="l">Показатель</th><th class="l">Формула</th></tr></thead>
+        <tbody>
+          <tr><td class="l">План запусков, мин</td><td class="l">Σ серых колонок по всем секторам за период</td></tr>
+          <tr><td class="l">Факт запусков, мин</td><td class="l">Σ белых колонок по тем же секторам</td></tr>
+          <tr><td class="l">Выполнение плана</td><td class="l">факт, мин ÷ план, мин</td></tr>
+          <tr><td class="l">Подано воды, т</td><td class="l">факт, мин × подача (0,27 т/мин из шапки листа)</td></tr>
+          <tr><td class="l">Площадь под каплей</td><td class="l">Σ площадей секторов, у которых есть хотя бы одна запись к этой дате</td></tr>
+          <tr><td class="l">Саженцев под каплей</td><td class="l">площадь под каплей × саженцев на 1 га* (865)</td></tr>
+          <tr><td class="l">На саженец, л/сут</td><td class="l">подано воды, т × 1 000 ÷ саженцев ÷ число дней периода</td></tr>
+          <tr><td class="l">Покрытие капли</td><td class="l">на саженец, л/сут ÷ потребность последней декады периода</td></tr>
+          <tr><td class="l">Подано на гектар</td><td class="l">подано воды, т ÷ площадь под каплей; 1 м³/га = 0,1 мм осадков</td></tr>
+        </tbody>
+      </table></div>
+      <p class="callout" style="margin-top:12px">Зоны не пересекаются: сектор, подключённый к капле, с этой даты исключается из зоны трактора, поэтому в сумме всегда получается площадь сада.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>6. Признаки в блоке «Качество учёта»</h3><span class="note">это правила проверки, а не оценка работы</span></div>
+      <div class="tbl-wrap"><table class="narrow">
+        <thead><tr><th class="l">Признак</th><th class="l">Как определяется</th></tr></thead>
+        <tbody>
+          <tr><td class="l">Факт — копия плана</td><td class="l">в строке «Выполнено» объём, люди и техника совпадают с планом до единицы</td></tr>
+          <tr><td class="l">Объём не ведётся</td><td class="l">за весь период по операции сумма факта объёма равна нулю при ненулевых людях</td></tr>
+          <tr><td class="l">Объём = план при любой численности</td><td class="l">у операции не больше двух разных значений объёма при четырёх и более разных значениях численности</td></tr>
+          <tr><td class="l">Единица не отражает работу</td><td class="l">объём измеряется в единицах, не связанных с трудозатратами (перевозка и внесение биогумуса)</td></tr>
+          <tr><td class="l">День без выработки</td><td class="l">день со статусом «Выполнено», где сумма людей и техники равна нулю</td></tr>
+          <tr><td class="l">Отменено по погоде</td><td class="l">строка со статусом «Отменено»; причина берётся из колонки «Комментарий / причина»</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>7. Период и горизонт расчёта</h3></div>
+      <ul class="plain">
+        <li>Период задаётся полями «С даты» и «По дату» в формате ДД.ММ.ГГГГ; быстрые кнопки и месяцы подставляют те же значения.</li>
+        <li>Верхняя граница по умолчанию — последний день, по который лист заполнен: есть строки со статусом «Выполнено» или «Отменено». Плановые строки на будущие даты в расчёт не входят.</li>
+        <li>Декады строятся только до этой даты, поэтому пустых декад с нулевым покрытием не появляется.</li>
+        <li>В суммы факта попадают строки «Выполнено»; строки «Отменено» дают дни без работ и причину, остальные статусы считаются незакрытыми.</li>
+      </ul>
     </div>
   </section>
 
@@ -760,7 +883,7 @@ const DRIP_SNAPSHOT_CSV = ",Ширина рядов,,5,,5,,5,,5,,5,,5,,5,,5,,5,,
 const DEFAULT_DRIP_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRov86HK-IEztRwxZZBMgxJZWBqu1feJDBaipJ2fg2zxdptDqQEAiMVP20lRA6m-etLlJGogIcmFK70/pub?gid=1968849865&single=true&output=csv';
 const RATE_P = 160000, RATE_T = 400000, HDAY = 7, USD = 12500;
 const LS_KEY = 'chortok-dashboard-v2';
-const BUILD = "06.10.2026 · 33";
+const BUILD = "07.10.2026 · 34";
 const DEFAULT_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRov86HK-IEztRwxZZBMgxJZWBqu1feJDBaipJ2fg2zxdptDqQEAiMVP20lRA6m-etLlJGogIcmFK70/pub?gid=2006008190&single=true&output=csv';
 
 /* ============ формат ============ */
